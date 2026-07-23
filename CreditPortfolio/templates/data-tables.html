@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Tables | Portfolio Project</title>
+
+    <link id="style" href="{% static 'libs/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/icons.css' %}" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css' %}">
+    <link rel="stylesheet" href="{% static 'cdn.datatables.net/responsive/2.3.0/css/responsive.bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'cdn.datatables.net/buttons/2.2.3/css/buttons.bootstrap5.min.css' %}">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Data Table Example</h3>
+            </div>
+            <div class="card-body">
+                <table id="example-table" class="table table-bordered text-nowrap w-100">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Office</th>
+                            <th>Age</th>
+                            <th>Start date</th>
+                            <th>Salary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in items %}
+                            <tr>
+                                <td>Name Surnameov</td>
+                                <td>System Architect N {{i}}</td>
+                                <td>Edinburgh</td>
+                                <td>61</td>
+                                <td>2011/04/25</td>
+                                <td>$320,800</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'libs/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script src="{% static 'code.jquery.com/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js' %}"></script>
+    
+    {% comment %} <script>
+        $(document).ready(function() {
+            $('#example-table').DataTable({
+                responsive: true,
+                language: {
+                    searchPlaceholder: 'Search...',
+                    sSearch: '',
+                }
+            });
+        });
+    </script> {% endcomment %}
+</body>
+</html>
