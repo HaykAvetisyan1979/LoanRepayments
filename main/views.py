@@ -32,75 +32,63 @@ from .models import (
 
 #         return render(request, self.template_name, context=context)
 
-class HomeListView(ListView):
-    template_name = 'index.html'
+# class HomeListView(ListView):
+#     template_name = 'index.html'
 
+#     @staticmethod
+#     def __extract_all_data():
+
+#         # user_object = Me.objects.first()
+#         # about_me = AboutMe.objects.first()
+#         # services = WhatIDo.objects.all()
+
+#         context = {
+#             # 'user_object':user_object,
+#             # 'about_me': about_me,
+#             # 'services_1':services[:2],
+
+#         }
+
+#         return context
+
+#     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+#         return render(request, self.template_name, context=self.__extract_all_data())
+    
+#     # def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+#     #     form = ContactForm(request.POST)
+#     #     if form.is_valid():
+#     #         full_name = form.cleaned_data.get('full_name')
+#     #         email = form.cleaned_data.get('email')
+#     #         subject = form.cleaned_data.get('subject')
+#     #         message = form.cleaned_data.get('message')
+            
+#     #         email_massage = f"Sender Name: {full_name}\nSender Email: {email}\nTopic: {subject}\nMessage:\n{message}"
+#     #         send_mail(
+#     #             subject="Message From Portfolio",
+#     #             message=email_massage,
+#     #             recipient_list=[EMAIL_SUPPORT_USER],
+#     #             from_email=EMAIL_HOST_USER
+#     #         )
+#     #         form.save()
+#     #     else:
+#     #         form = ContactForm()
+        
+#     #     return redirect('/')
+
+class HomeListView(ListView):
+    """Landing page — loads dashboard KPIs from both data sources."""
     @staticmethod
     def __extract_all_data():
 
-        # user_object = Me.objects.first()
-        # about_me = AboutMe.objects.first()
-        # services = WhatIDo.objects.all()
+        sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
 
-        context = {
-            # 'user_object':user_object,
-            # 'about_me': about_me,
-            # 'services_1':services[:2],
-
-        }
+        context = {'data1':str(sales_qs.first)}
 
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        return render(request, self.template_name, context=self.__extract_all_data())
-    
-    # def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-    #     form = ContactForm(request.POST)
-    #     if form.is_valid():
-    #         full_name = form.cleaned_data.get('full_name')
-    #         email = form.cleaned_data.get('email')
-    #         subject = form.cleaned_data.get('subject')
-    #         message = form.cleaned_data.get('message')
-            
-    #         email_massage = f"Sender Name: {full_name}\nSender Email: {email}\nTopic: {subject}\nMessage:\n{message}"
-    #         send_mail(
-    #             subject="Message From Portfolio",
-    #             message=email_massage,
-    #             recipient_list=[EMAIL_SUPPORT_USER],
-    #             from_email=EMAIL_HOST_USER
-    #         )
-    #         form.save()
-    #     else:
-    #         form = ContactForm()
-        
-    #     return redirect('/')
+        return render(request, 'main/index.html', context=self.__extract_all_data())
 
-def home(request):
-    """Landing page — loads dashboard KPIs from both data sources."""
-    # ctx = get_menu_context(request)
-    # year = datetime.date.today().year
-
-    # try:
-    #     # sales_qs = SalesRecord.objects.using('external_db').filter(sale_date__year=year)
-    #     sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
-        
-    #     # inv_qs = InventoryItem.objects.using('external_db').all()
-    #     # agg = AggregateCalculator(sales_qs, inv_qs)
-    #     # ctx['dashboard'] = agg.dashboard_kpis()
-    #     # ctx['db_connected'] = True
-    # except Exception as e:
-    #     # Graceful degradation: show demo data if external DB unreachable
-    #     #     ctx['db_connected'] = False
-    #     #     ctx['db_error'] = str(e)
-    #     #     ctx['dashboard'] = _demo_dashboard()
-
-    #     # ctx['current_year'] = year
-    
-    sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
-
-    context = {'data1':str(sales_qs.first)}
-
-    return render(request, 'core/index.html', context)
 
 
 def sales_report(request):
