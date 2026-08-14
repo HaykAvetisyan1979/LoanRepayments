@@ -1,0 +1,195 @@
+{% extends "core/base.html" %}
+{% block title %}Sales Report — Analytics Portal{% endblock %}
+{% block page_title %}Sales Report{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<form method="get">
+    <div class="filter-bar">
+        <label style="font-size:12px;color:var(--muted)">Year</label>
+        <select name="year">
+            {% for y in years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+
+        <label style="font-size:12px;color:var(--muted)">Region</label>
+        <select name="region">
+            <option value="">All Regions</option>
+            {% for r in regions %}
+            <option value="{{ r }}" {% if r == selected_region %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+
+        {% if selected_region or selected_year %}
+        <a href="{% url 'core:sales_report' %}" style="font-size:13px;color:var(--muted);text-decoration:none;align-self:center;">✕ Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+{% if data %}
+<!-- KPI Row -->
+<div class="kpi-grid">
+    <div class="kpi-card green">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value">${{ data.total_revenue|floatformat:0 }}</div>
+        <div class="kpi-sub">{{ data.transaction_count }} transactions</div>
+    </div>
+    <div class="kpi-card {% if data.target_achieved %}green{% else %}red{% endif %}">
+        <div class="kpi-label">Gross Profit</div>
+        <div class="kpi-value">${{ data.total_profit|floatformat:0 }}</div>
+        <div class="kpi-sub">
+            {% if data.target_achieved %}
+                ✓ Margin target achieved
+            {% else %}
+                ✗ Below margin target
+            {% endif %}
+        </div>
+    </div>
+    <div class="kpi-card purple">
+        <div class="kpi-label">Avg Margin</div>
+        <div class="kpi-value">{{ data.avg_margin_pct }}%</div>
+        <div class="kpi-sub">Target delta: {{ data.margin_vs_target|floatformat:3 }}</div>
+    </div>
+    <div class="kpi-card yellow">
+        <div class="kpi-label">Total Units</div>
+        <div class="kpi-value">{{ data.total_units|floatformat:0 }}</div>
+        <div class="kpi-sub">Avg rev/unit: ${{ data.total_revenue|default:0|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Revenue excl. VAT</div>
+        <div class="kpi-value">${{ data.revenue_ex_vat|floatformat:0 }}</div>
+        <div class="kpi-sub">VAT collected: ${{ data.vat_amount|floatformat:0 }}</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Revenue by Category — bar chart -->
+    <div class="chart-wrap">
+        <div style="font-size:13px;font-weight:600;margin-bottom:16px;">Revenue by Category</div>
+        <canvas id="catChart" style="max-height:240px;"></canvas>
+    </div>
+
+    <!-- Revenue by Region — doughnut -->
+    <div class="chart-wrap">
+        <div style="font-size:13px;font-weight:600;margin-bottom:16px;">Revenue by Region</div>
+        <canvas id="regionChart" style="max-height:240px;"></canvas>
+    </div>
+</div>
+
+<!-- Top Products Table -->
+<div class="table-wrap">
+    <div class="table-header">
+        Top Products
+        <span class="badge badge-blue">{{ data.top_products|length }} shown</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th style="text-align:right">Revenue</th>
+                <th style="text-align:right">Units Sold</th>
+                <th style="text-align:right">Avg Unit Price</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in data.top_products %}
+        <tr>
+            <td style="color:var(--muted);font-family:var(--mono);width:40px">{{ forloop.counter }}</td>
+            <td>{{ p.name }}</td>
+            <td style="text-align:right;font-family:var(--mono)">${{ p.revenue|floatformat:0 }}</td>
+            <td style="text-align:right;font-family:var(--mono)">{{ p.units|floatformat:0 }}</td>
+            <td style="text-align:right;font-family:var(--mono)">
+                {% if p.units > 0 %}${% widthratio p.revenue p.units 1 %}{% else %}—{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px">No data for selected filters</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Category breakdown table -->
+<div class="table-wrap">
+    <div class="table-header">Revenue by Category — Detail</div>
+    <table>
+        <thead>
+            <tr><th>Category</th><th style="text-align:right">Revenue</th><th style="text-align:right">Share %</th></tr>
+        </thead>
+        <tbody>
+        {% for cat, rev in data.by_category.items %}
+        <tr>
+            <td>{{ cat }}</td>
+            <td style="text-align:right;font-family:var(--mono)">${{ rev|floatformat:0 }}</td>
+            <td style="text-align:right;font-family:var(--mono)">
+                {% if data.total_revenue > 0 %}
+                    {% widthratio rev data.total_revenue 100 %}%
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="alert alert-warning">No sales data found for the selected filters.</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+{% if data %}
+<script>
+const chartOpts = {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#e2e8f0', font: { family: 'DM Mono', size: 11 } } } },
+    scales: {
+        x: { ticks: { color: '#64748b', font: { family: 'DM Mono', size: 11 } }, grid: { color: '#2a2f3f' } },
+        y: { ticks: { color: '#64748b', font: { family: 'DM Mono', size: 11 } }, grid: { color: '#2a2f3f' } }
+    }
+};
+
+// Category bar chart
+const catData = {{ data.by_category|safe }};
+new Chart(document.getElementById('catChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(catData),
+        datasets: [{
+            label: 'Revenue',
+            data: Object.values(catData),
+            backgroundColor: ['#4f8ef7','#a78bfa','#34d399','#fbbf24','#f87171','#22d3ee'],
+            borderRadius: 4,
+        }]
+    },
+    options: { ...chartOpts, plugins: { legend: { display: false } } }
+});
+
+// Region doughnut
+const regionData = {{ data.by_region|safe }};
+new Chart(document.getElementById('regionChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(regionData),
+        datasets: [{
+            data: Object.values(regionData),
+            backgroundColor: ['#4f8ef7','#a78bfa','#34d399','#fbbf24','#f87171','#22d3ee'],
+            borderWidth: 0,
+            hoverOffset: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: { legend: { position: 'right', labels: { color: '#e2e8f0', font: { family: 'DM Mono', size: 11 }, padding: 16 } } }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

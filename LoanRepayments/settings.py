@@ -59,7 +59,7 @@ ROOT_URLCONF = 'LoanRepayments.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -93,7 +93,21 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD', 'admin'),
         'HOST': os.environ.get('DB_HOST', 'db'),  # <--- THIS MUST BE 'db'
         'PORT': os.environ.get('DB_PORT', '5432'),
+    },
+
+    'external_db': {
+        'ENGINE':   'mssql',
+        'NAME':     os.environ.get('MSSQL_DB',       'LoanRepaymanets'),
+        'USER':     os.environ.get('MSSQL_USER',     'sa'),
+        'PASSWORD': os.environ.get('MSSQL_PASSWORD', 'AAAaaa111'),
+        'HOST':     os.environ.get('MSSQL_HOST',     'COMP-70-173'),
+        'PORT':     os.environ.get('MSSQL_PORT',     '1433'),
+        'OPTIONS':  {'driver': 'ODBC Driver 17 for SQL Server',
+                    'extra_params': 'TrustServerCertificate=yes'},
     }
+
+
+
 }
 
 

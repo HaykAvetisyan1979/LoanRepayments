@@ -1,8 +1,24 @@
-from django.shortcuts import render, redirect
+"""
+views.py — Thin views. Each view:
+  1. Reads filter params from the request
+  2. Queries external DB (via ORM proxy models)
+  3. Passes data to a Calculation class from models.py
+  4. Sends the result dict to a template
+
+Views contain NO calculation logic themselves.
+"""
+
+from django.shortcuts import render, redirect, get_object_or_404
 from typing import Any
-from django.http import HttpRequest, HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.generic import ListView
-from .models import Home
+from django.views.decorators.cache import cache_page
+import datetime
+
+from .models import (
+    Home, SalesRecord, CalculationEngine, ReportBuilder, Report
+)
 
 # class HomeListView(ListView):				
 #     template_name = 'index.html'
@@ -58,3 +74,65 @@ class HomeListView(ListView):
     #         form = ContactForm()
         
     #     return redirect('/')
+
+def home(request):
+    """Landing page — loads dashboard KPIs from both data sources."""
+    # ctx = get_menu_context(request)
+    # year = datetime.date.today().year
+
+    # try:
+    #     # sales_qs = SalesRecord.objects.using('external_db').filter(sale_date__year=year)
+    #     sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
+        
+    #     # inv_qs = InventoryItem.objects.using('external_db').all()
+    #     # agg = AggregateCalculator(sales_qs, inv_qs)
+    #     # ctx['dashboard'] = agg.dashboard_kpis()
+    #     # ctx['db_connected'] = True
+    # except Exception as e:
+    #     # Graceful degradation: show demo data if external DB unreachable
+    #     #     ctx['db_connected'] = False
+    #     #     ctx['db_error'] = str(e)
+    #     #     ctx['dashboard'] = _demo_dashboard()
+
+    #     # ctx['current_year'] = year
+    
+    sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
+
+    context = {'data1':str(sales_qs.first)}
+
+    return render(request, 'core/index.html', context)
+
+
+def sales_report(request):
+    """Sales summary with optional year/region filters."""
+    # ctx = get_menu_context(request)
+
+    # Filters from GET params
+    year = request.GET.get('year', datetime.date.today().year)
+    region = request.GET.get('region', '')
+
+    try:
+        qs = SalesRecord.objects.using('external_db').filter(sale_date__year=year)
+        if region:
+            qs = qs.filter(region=region)
+
+        engine = CalculationEngine(qs)
+        ctx['data'] = engine.sales_summary()
+
+        # Available filter options
+        ctx['regions'] = list(
+            SalesRecord.objects.using('external_db')
+            .values_list('region', flat=True)
+            .distinct()
+            .order_by('region')
+        )
+        ctx['db_connected'] = True
+    except Exception as e:
+        ctx['db_connected'] = False
+        ctx['db_error'] = str(e)
+        ctx['data'] = {}
+
+    ctx['selected_year'] = int(year)
+    ctx['selected_region'] = region
+    ctx['years'] = list(range(datetime.date.today().year, datetime.date.today().year - 5, -1))
+    return render(request, 'core/sales_report.html', ctx)
