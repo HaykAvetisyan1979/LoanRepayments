@@ -103,8 +103,11 @@ DATABASES = {
         # 'HOST':     os.environ.get('MSSQL_HOST',     'COMP-70-173'),
         'HOST': 'host.docker.internal',
         'PORT':     os.environ.get('MSSQL_PORT',     '1433'),
-        'OPTIONS':  {'driver': 'ODBC Driver 17 for SQL Server',
-                    'extra_params': 'TrustServerCertificate=yes'},
+        # 'OPTIONS':  {'driver': 'ODBC Driver 17 for SQL Server',
+        #             'extra_params': 'TrustServerCertificate=yes'},
+        'OPTIONS': {'driver': 'ODBC Driver 18 for SQL Server',
+                   'extra_params': 'TrustServerCertificate=yes',
+        },
     }
 
 
