@@ -141,9 +141,9 @@ class SalesRecord(models.Model):
     Change field names / table name to match your actual schema.
     """
 
-    id = models.IntegerField(primary_key=True)
+    # id = models.IntegerField()
     Branch = models.SmallIntegerField()
-    ClientID = models.IntegerField()
+    ClientID = models.IntegerField(primary_key=True)
     Name = models.CharField(max_length=500)
     Address = models.CharField(max_length=500)
     Phones = models.CharField(max_length=200)
