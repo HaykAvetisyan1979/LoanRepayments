@@ -219,23 +219,25 @@ class SalesRecord(models.Model):
 
 class DataToPandasDataset:
 
-    def __init__(self):
-        self.dt
+    # def __init__(self):
+    #     self.dt
 
     # Fetches data from external database and stores to pandas dataframe
-    def load_loans_dataframe(self, query: str="",  table: str="", params=None,) -> pd.DataFrame:
-        if query is "":
-            query = f"SELECT * FROM {table}"
+    def load_loans_dataframe(self) -> pd.DataFrame:
+        self.query=None,  
+        # self.table="PastDueLoanRazm", 
+        self.params=None,
+
+        if self.query is None:
+            self.query = "SELECT * FROM PastDueLoanRazm"
         
         with connections['external_db'].cursor() as cursor:
-            cursor.execute(query, params or [])
+            cursor.execute("SELECT * FROM PastDueLoanRazm", self.params or [])
             columns = [col[0] for col in cursor.description]
             rows = cursor.fetchall()
-        
+
         return pd.DataFrame.from_records(rows, columns=columns)
 
-    def dt(self):
-        dt = self.load_loans_dataframe("","","PastDueLoanRazm")
     
 
 

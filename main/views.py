@@ -80,8 +80,8 @@ class HomeListView(ListView):
     @staticmethod
     def __extract_all_data():
 
-
-        context = {'data1': DataToPandasDataset.dt}
+        dt = DataToPandasDataset.load_loans_dataframe
+        context = {'data1': dt}
 
         return context
 
