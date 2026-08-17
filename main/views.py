@@ -82,7 +82,7 @@ class HomeListView(ListView):
 
         sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
 
-        context = {'data1':str(sales_qs.first)}
+        context = {'data1':sales_qs.first}
 
         return context
 
