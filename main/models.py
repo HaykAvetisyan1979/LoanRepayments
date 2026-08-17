@@ -2,6 +2,9 @@ from django.db import models
 from django.core.cache import cache
 from django.utils import timezone
 import statistics
+import pandas as pd
+from django.db import connections
+
 
 
 class Home(models.Model):
@@ -213,6 +216,28 @@ class SalesRecord(models.Model):
 #   • Easy to unit-test in isolation
 #   • Can import and reuse across multiple views
 # ==============================================================================
+
+class DataToPandasDataset:
+
+    def __init__(self):
+        self.dt
+
+    # Fetches data from external database and stores to pandas dataframe
+    def load_loans_dataframe(self, query: str="",  table: str="", params=None,) -> pd.DataFrame:
+        if query is "":
+            query = f"SELECT * FROM {table}"
+        
+        with connections['external_db'].cursor() as cursor:
+            cursor.execute(query, params or [])
+            columns = [col[0] for col in cursor.description]
+            rows = cursor.fetchall()
+        
+        return pd.DataFrame.from_records(rows, columns=columns)
+
+    def dt(self):
+        dt = self.load_loans_dataframe("","","PastDueLoanRazm")
+    
+
 
 class ParameterStore:
     """

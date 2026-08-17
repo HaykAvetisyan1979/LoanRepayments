@@ -17,7 +17,7 @@ from django.views.decorators.cache import cache_page
 import datetime
 
 from .models import (
-    Home, SalesRecord, CalculationEngine, ReportBuilder, Report
+    Home, SalesRecord, CalculationEngine, ReportBuilder, Report, DataToPandasDataset
 )
 
 # class HomeListView(ListView):				
@@ -80,9 +80,8 @@ class HomeListView(ListView):
     @staticmethod
     def __extract_all_data():
 
-        sales_qs = SalesRecord.objects.using('external_db').filter(Currency='USD')
 
-        context = {'data1':sales_qs.first}
+        context = {'data1': DataToPandasDataset.dt}
 
         return context
 

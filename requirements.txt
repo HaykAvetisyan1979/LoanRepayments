@@ -9,3 +9,4 @@ sqlparse==0.5.5
 tzdata==2026.1
 mssql-django
 pyodbc
+pandas
