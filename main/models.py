@@ -230,7 +230,9 @@ class DataToPandasDataset:
             # cursor.execute("SELECT * FROM PastDueLoanRazm", self.params or [])
             cursor.execute(self.query, self.params)
             columns = [col[0] for col in cursor.description]
-            rows = cursor.fetchall()
+            # rows = cursor.fetchall()
+            rows = cursor.fetchmany(1000)
+
 
         return pd.DataFrame.from_records(rows, columns=columns)
 
