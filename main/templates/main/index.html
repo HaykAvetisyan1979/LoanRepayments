@@ -5,15 +5,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-	<title>Medigo Green, free responsive template</title>
+	<title>Loan Portfolio</title>
     <meta name="keywords" content="">
 	<meta name="description" content="">
     <meta name="author" content="templatemo">
-    <!-- 
-	Medigo Template
-	http://www.templatemo.com/preview/templatemo_460_medigo
-    -->
-
 	<!-- Google Fonts -->
 	<link href="http://fonts.googleapis.com/css?family=PT+Serif:400,700,400italic,700itali" rel="stylesheet">
 	<link href="http://fonts.googleapis.com/css?family=Raleway:400,900,800,700,500,200,100,600" rel="stylesheet">
@@ -23,12 +18,23 @@
 	<link rel="stylesheet" href="{% static 'css/misc.css' %}">
 	<link rel="stylesheet" href="{% static 'css/green-scheme.css' %}">
 	
+	<link rel="stylesheet"
+          href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 	<style>
     /* This overrides the background defined in your CSS file */
     #homeIntro {
         background-image: url("{% static 'images/includes/AEB.jfif' %}") !important;
     }
 	</style>
+
+	<style>
+        body { font-family: sans-serif; padding: 24px; background: #f4f6f9; }
+        .table-wrap { background: #fff; border-radius: 8px; padding: 20px;
+                      box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        table.dataTable thead { background: #1e293b; color: #fff; }
+        table.dataTable thead th { color: #fff !important; }
+        tr.overdue { background: #fff1f2 !important; color: #be123c; }
+    </style>
 
 
 	<!-- JavaScripts -->
@@ -39,6 +45,7 @@
 
 </head>
 <body>
+
 	<div class="responsive_menu">
         <ul class="main_menu">
             <li><a href="index.html">Home</a></li>
@@ -504,6 +511,30 @@
 	    </div> <!-- /.parallax-overlay -->
 	</section> <!-- /#blogPosts -->
 
+{% load dict_filters %}
+
+<div class="table-wrap">
+    <table id="loanTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                {% for col in columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr {% if row.is_overdue %}class="overdue"{% endif %}>
+                {% for col in columns %}
+                <td>{{ row|dict_key:col }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
 	<footer class="site-footer">
 		<div class="container">
 			<div class="row">
@@ -533,6 +564,25 @@
 
 	<script src="{% static 'js/min/plugins.min.js' %}"></script>
 	<script src="{% static 'js/min/medigo-custom.min.js' %}"></script>
+
+	
+<!-- jQuery + DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#loanTable').DataTable({
+            pageLength: 25,          // rows per page
+            order: [[0, 'asc']],     // default sort: first column ascending
+            scrollX: true,           // horizontal scroll for wide tables
+            language: {
+                search: 'Filter:',
+                lengthMenu: 'Show _MENU_ loans',
+                info: 'Showing _START_ to _END_ of _TOTAL_ loans',
+            }
+        });
+    });
+</script>	
 
 </body>
 </html>

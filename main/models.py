@@ -7,130 +7,130 @@ from django.db import connections
 
 
 
-class Home(models.Model):
-    title = models.CharField(max_length=255)
-    text = models.TextField()
-    img = models.ImageField(upload_to='media')
+# class Home(models.Model):
+#     title = models.CharField(max_length=255)
+#     text = models.TextField()
+#     img = models.ImageField(upload_to='media')
 
-    def __str__(self) -> str:
-        return self.title
+#     def __str__(self) -> str:
+#         return self.title
     
-    class Meta:
-        verbose_name_plural = 'Home'
+#     class Meta:
+#         verbose_name_plural = 'Home'
 
 
 # ==============================================================================
 # LAYER 1 — LOCAL CONFIGURATION MODELS (stored in local SQLite, editable via Admin)
 # ==============================================================================
 
-class CalculationParameter(models.Model):
-    """
-    Admin-editable numeric/string parameters used by the calculation engine.
-    Instead of hardcoding thresholds, multipliers, or rates in Python,
-    store them here and pull them at runtime.
+# class CalculationParameter(models.Model):
+#     """
+#     Admin-editable numeric/string parameters used by the calculation engine.
+#     Instead of hardcoding thresholds, multipliers, or rates in Python,
+#     store them here and pull them at runtime.
 
-    Example rows:
-        key='profit_margin_target'  value='0.25'  param_type='float'
-        key='vat_rate'              value='0.20'  param_type='float'
-        key='currency_symbol'       value='$'     param_type='string'
-        key='low_stock_threshold'   value='50'    param_type='integer'
-    """
-    PARAM_TYPES = [
-        ('float', 'Float (decimal number)'),
-        ('integer', 'Integer (whole number)'),
-        ('string', 'String (text)'),
-        ('boolean', 'Boolean (true/false)'),
-        ('json', 'JSON (structured data)'),
-    ]
+#     Example rows:
+#         key='profit_margin_target'  value='0.25'  param_type='float'
+#         key='vat_rate'              value='0.20'  param_type='float'
+#         key='currency_symbol'       value='$'     param_type='string'
+#         key='low_stock_threshold'   value='50'    param_type='integer'
+#     """
+#     PARAM_TYPES = [
+#         ('float', 'Float (decimal number)'),
+#         ('integer', 'Integer (whole number)'),
+#         ('string', 'String (text)'),
+#         ('boolean', 'Boolean (true/false)'),
+#         ('json', 'JSON (structured data)'),
+#     ]
 
-    key = models.CharField(max_length=100, unique=True,
-                           help_text="Python-safe identifier used in code, e.g. 'vat_rate'")
-    value = models.TextField(help_text="The parameter value as text")
-    param_type = models.CharField(max_length=20, choices=PARAM_TYPES, default='float')
-    description = models.TextField(blank=True, help_text="What this parameter controls")
-    category = models.CharField(max_length=50, blank=True,
-                                help_text="Group related params, e.g. 'Financial', 'Inventory'")
-    last_modified = models.DateTimeField(auto_now=True)
+#     key = models.CharField(max_length=100, unique=True,
+#                            help_text="Python-safe identifier used in code, e.g. 'vat_rate'")
+#     value = models.TextField(help_text="The parameter value as text")
+#     param_type = models.CharField(max_length=20, choices=PARAM_TYPES, default='float')
+#     description = models.TextField(blank=True, help_text="What this parameter controls")
+#     category = models.CharField(max_length=50, blank=True,
+#                                 help_text="Group related params, e.g. 'Financial', 'Inventory'")
+#     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        ordering = ['category', 'key']
-        verbose_name = "Calculation Parameter"
-        verbose_name_plural = "Calculation Parameters"
+#     class Meta:
+#         ordering = ['category', 'key']
+#         verbose_name = "Calculation Parameter"
+#         verbose_name_plural = "Calculation Parameters"
 
-    def __str__(self):
-        return f"{self.key} = {self.value} ({self.param_type})"
+#     def __str__(self):
+#         return f"{self.key} = {self.value} ({self.param_type})"
 
-    def typed_value(self):
-        """Return value cast to its declared Python type."""
-        import json
-        converters = {
-            'float': float,
-            'integer': int,
-            'string': str,
-            'boolean': lambda v: v.strip().lower() in ('true', '1', 'yes'),
-            'json': json.loads,
-        }
-        try:
-            return converters[self.param_type](self.value)
-        except (ValueError, TypeError, KeyError):
-            return self.value
-
-
-class DataSourceConfig(models.Model):
-    """
-    Admin-configurable SQL queries / table names for the external DB.
-    Lets admins adjust which data gets pulled without touching Python code.
-    """
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    sql_query = models.TextField(
-        help_text="Raw SQL query executed against the external SQL Server database. "
-                  "Use %(param)s style placeholders for safe parameterization."
-    )
-    is_active = models.BooleanField(default=True)
-    cache_timeout_seconds = models.PositiveIntegerField(
-        default=300,
-        help_text="Seconds to cache query results (0 = no cache)"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Data Source Query"
-        verbose_name_plural = "Data Source Queries"
-
-    def __str__(self):
-        return self.name
+#     def typed_value(self):
+#         """Return value cast to its declared Python type."""
+#         import json
+#         converters = {
+#             'float': float,
+#             'integer': int,
+#             'string': str,
+#             'boolean': lambda v: v.strip().lower() in ('true', '1', 'yes'),
+#             'json': json.loads,
+#         }
+#         try:
+#             return converters[self.param_type](self.value)
+#         except (ValueError, TypeError, KeyError):
+#             return self.value
 
 
-class Report(models.Model):
-    """
-    Admin-configurable report definitions.
-    Links a data source query to a calculation and a template.
-    """
-    name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, help_text="Used in the URL: /reports/<slug>/")
-    data_source = models.ForeignKey(DataSourceConfig, on_delete=models.SET_NULL,
-                                    null=True, blank=True)
-    calculation_type = models.CharField(
-        max_length=50,
-        choices=[
-            ('sales_summary', 'Sales Summary'),
-            ('inventory_analysis', 'Inventory Analysis'),
-            ('profit_margin', 'Profit Margin Report'),
-            ('trend_analysis', 'Trend Analysis'),
-            ('custom', 'Custom (uses slug to find calculator)'),
-        ],
-        default='sales_summary'
-    )
-    is_active = models.BooleanField(default=True)
-    show_in_menu = models.BooleanField(default=True)
+# class DataSourceConfig(models.Model):
+#     """
+#     Admin-configurable SQL queries / table names for the external DB.
+#     Lets admins adjust which data gets pulled without touching Python code.
+#     """
+#     name = models.CharField(max_length=100, unique=True)
+#     description = models.TextField(blank=True)
+#     sql_query = models.TextField(
+#         help_text="Raw SQL query executed against the external SQL Server database. "
+#                   "Use %(param)s style placeholders for safe parameterization."
+#     )
+#     is_active = models.BooleanField(default=True)
+#     cache_timeout_seconds = models.PositiveIntegerField(
+#         default=300,
+#         help_text="Seconds to cache query results (0 = no cache)"
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        verbose_name = "Report"
-        verbose_name_plural = "Reports"
+#     class Meta:
+#         verbose_name = "Data Source Query"
+#         verbose_name_plural = "Data Source Queries"
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
+
+
+# class Report(models.Model):
+#     """
+#     Admin-configurable report definitions.
+#     Links a data source query to a calculation and a template.
+#     """
+#     name = models.CharField(max_length=100)
+#     slug = models.SlugField(unique=True, help_text="Used in the URL: /reports/<slug>/")
+#     data_source = models.ForeignKey(DataSourceConfig, on_delete=models.SET_NULL,
+#                                     null=True, blank=True)
+#     calculation_type = models.CharField(
+#         max_length=50,
+#         choices=[
+#             ('sales_summary', 'Sales Summary'),
+#             ('inventory_analysis', 'Inventory Analysis'),
+#             ('profit_margin', 'Profit Margin Report'),
+#             ('trend_analysis', 'Trend Analysis'),
+#             ('custom', 'Custom (uses slug to find calculator)'),
+#         ],
+#         default='sales_summary'
+#     )
+#     is_active = models.BooleanField(default=True)
+#     show_in_menu = models.BooleanField(default=True)
+
+#     class Meta:
+#         verbose_name = "Report"
+#         verbose_name_plural = "Reports"
+
+#     def __str__(self):
+#         return self.name
 
 
 # ==============================================================================
@@ -219,20 +219,16 @@ class SalesRecord(models.Model):
 
 class DataToPandasDataset:
 
-    # def __init__(self):
-    #     self.dt
+    def __init__(self, table: str = "PastDueLoanRazm", query: str | None = None, params: list | None = None):
+        self.table = table
+        self.query = query or f"SELECT * FROM {self.table}"
+        self.params = params or []
 
     # Fetches data from external database and stores to pandas dataframe
     def load_loans_dataframe(self) -> pd.DataFrame:
-        self.query=None,  
-        # self.table="PastDueLoanRazm", 
-        self.params=None,
-
-        if self.query is None:
-            self.query = "SELECT * FROM PastDueLoanRazm"
-        
         with connections['external_db'].cursor() as cursor:
-            cursor.execute("SELECT * FROM PastDueLoanRazm", self.params or [])
+            # cursor.execute("SELECT * FROM PastDueLoanRazm", self.params or [])
+            cursor.execute(self.query, self.params)
             columns = [col[0] for col in cursor.description]
             rows = cursor.fetchall()
 
@@ -240,64 +236,63 @@ class DataToPandasDataset:
 
     
 
+# class ParameterStore:
+#     """
+#     Lightweight helper that loads CalculationParameter rows from local DB
+#     and exposes them as typed Python values.
+#     Cached so the DB isn't hit on every request.
+#     """
+#     _cache_key = 'param_store_all'
 
-class ParameterStore:
-    """
-    Lightweight helper that loads CalculationParameter rows from local DB
-    and exposes them as typed Python values.
-    Cached so the DB isn't hit on every request.
-    """
-    _cache_key = 'param_store_all'
+#     @classmethod
+#     def get(cls, key: str, default=None):
+#         """Get a single parameter by key, typed."""
+#         params = cls._load_all()
+#         return params.get(key, default)
 
-    @classmethod
-    def get(cls, key: str, default=None):
-        """Get a single parameter by key, typed."""
-        params = cls._load_all()
-        return params.get(key, default)
+#     @classmethod
+#     def _load_all(cls) -> dict:
+#         cached = cache.get(cls._cache_key)
+#         if cached:
+#             return cached
+#         params = {p.key: p.typed_value() for p in CalculationParameter.objects.all()}
+#         cache.set(cls._cache_key, params, timeout=120)
+#         return params
 
-    @classmethod
-    def _load_all(cls) -> dict:
-        cached = cache.get(cls._cache_key)
-        if cached:
-            return cached
-        params = {p.key: p.typed_value() for p in CalculationParameter.objects.all()}
-        cache.set(cls._cache_key, params, timeout=120)
-        return params
-
-    @classmethod
-    def invalidate(cls):
-        cache.delete(cls._cache_key)
+#     @classmethod
+#     def invalidate(cls):
+#         cache.delete(cls._cache_key)
 
 
-class CalculationEngine:
-    """
-    Performs calculations on a SINGLE queryset / dataset.
+# class CalculationEngine:
+#     """
+#     Performs calculations on a SINGLE queryset / dataset.
 
-    Instantiate with a queryset or list of model instances,
-    call whichever calculation methods you need, then read the results dict.
+#     Instantiate with a queryset or list of model instances,
+#     call whichever calculation methods you need, then read the results dict.
 
-    Example usage in a view:
-        records = SalesRecord.objects.using('external_db').filter(sale_date__year=2024)
-        engine = CalculationEngine(records)
-        results = engine.sales_summary()
-    """
+#     Example usage in a view:
+#         records = SalesRecord.objects.using('external_db').filter(sale_date__year=2024)
+#         engine = CalculationEngine(records)
+#         results = engine.sales_summary()
+#     """
 
-    def __init__(self, queryset_or_list):
-        # Materialise once so we don't hit the DB multiple times
-        self.data = list(queryset_or_list)
-        self.params = ParameterStore  # access calculation params from admin
+#     def __init__(self, queryset_or_list):
+#         # Materialise once so we don't hit the DB multiple times
+#         self.data = list(queryset_or_list)
+#         self.params = ParameterStore  # access calculation params from admin
 
     # ------------------------------------------------------------------
-    def sales_summary(self) -> dict:
-        """Aggregate revenue, profit, margins across a sales queryset."""
+    # def sales_summary(self) -> dict:
+    #     """Aggregate revenue, profit, margins across a sales queryset."""
         # if not self.data:
         #     return self._empty_sales_summary()
 
-        total_BalanceEQ = sum(r.BalanceEQ for r in self.data)
+        # total_BalanceEQ = sum(r.BalanceEQ for r in self.data)
         # total_revenue = sum(r.revenue for r in self.data)
         # total_cost = sum(r.quantity * r.cost_price for r in self.data)
         # total_profit = total_revenue - total_cost
-        total_units = sum(r.quantity for r in self.data)
+        # total_units = sum(r.quantity for r in self.data)
 
         # margin_target = self.params.get('profit_margin_target', 0.20)
         # vat_rate = self.params.get('vat_rate', 0.20)
@@ -317,11 +312,11 @@ class CalculationEngine:
         #     by_region.setdefault(r.region, 0)
         #     by_region[r.region] += float(r.revenue)
 
-        return {
-            'total_BalanceEQ': round(float(total_BalanceEQ), 2),
+        # return {
+        #     'total_BalanceEQ': round(float(total_BalanceEQ), 2),
             # 'total_cost': round(float(total_cost), 2),
             # 'total_profit': round(float(total_profit), 2),
-            'total_units': round(float(total_units), 2),
+            # 'total_units': round(float(total_units), 2),
             # 'avg_margin_pct': round(avg_margin, 2),
             # 'revenue_ex_vat': round(float(total_revenue) / (1 + vat_rate), 2),
             # 'vat_amount': round(float(total_revenue) - float(total_revenue) / (1 + vat_rate), 2),
@@ -331,7 +326,7 @@ class CalculationEngine:
             # 'by_category': dict(sorted(by_category.items(), key=lambda x: -x[1])),
             # 'by_region': dict(sorted(by_region.items(), key=lambda x: -x[1])),
             # 'top_products': self._top_products(n=10),
-        }
+        # }
 
     # def _top_products(self, n=10) -> list:
     #     by_product = {}
@@ -530,44 +525,44 @@ class CalculationEngine:
 #         }
 
 
-class ReportBuilder:
-    """
-    Orchestrates the full pipeline for a named Report:
-      1. Load report config from DB
-      2. Pull data from external DB (using configured query or ORM)
-      3. Run the appropriate calculator
-      4. Return a context dict ready for the template
-    """
+# class ReportBuilder:
+#     """
+#     Orchestrates the full pipeline for a named Report:
+#       1. Load report config from DB
+#       2. Pull data from external DB (using configured query or ORM)
+#       3. Run the appropriate calculator
+#       4. Return a context dict ready for the template
+#     """
 
-    def build(self, report_slug: str, filters: dict = None) -> dict:
-        try:
-            report = Report.objects.get(slug=report_slug, is_active=True)
-        except Report.DoesNotExist:
-            return {'error': f"Report '{report_slug}' not found or inactive."}
+#     def build(self, report_slug: str, filters: dict = None) -> dict:
+#         try:
+#             report = Report.objects.get(slug=report_slug, is_active=True)
+#         except Report.DoesNotExist:
+#             return {'error': f"Report '{report_slug}' not found or inactive."}
 
-        filters = filters or {}
+#         filters = filters or {}
 
-        # Dispatch to the right calculation method
-        dispatch = {
-            'sales_summary': self._build_sales_summary,
-            # 'inventory_analysis': self._build_inventory,
-            # 'profit_margin': self._build_profit_margin,
-            # 'trend_analysis': self._build_trend,
-        }
+#         # Dispatch to the right calculation method
+#         dispatch = {
+#             'sales_summary': self._build_sales_summary,
+#             # 'inventory_analysis': self._build_inventory,
+#             # 'profit_margin': self._build_profit_margin,
+#             # 'trend_analysis': self._build_trend,
+#         }
 
-        builder_fn = dispatch.get(report.calculation_type, self._build_custom)
-        result = builder_fn(report, filters)
-        result['report'] = report
-        return result
+#         builder_fn = dispatch.get(report.calculation_type, self._build_custom)
+#         result = builder_fn(report, filters)
+#         result['report'] = report
+#         return result
 
-    def _build_sales_summary(self, report, filters) -> dict:
-        qs = SalesRecord.objects.using('external_db').all()
-        if filters.get('year'):
-            qs = qs.filter(sale_date__year=filters['year'])
-        if filters.get('region'):
-            qs = qs.filter(region=filters['region'])
-        engine = CalculationEngine(qs)
-        return {'data': engine.sales_summary()}
+#     def _build_sales_summary(self, report, filters) -> dict:
+#         qs = SalesRecord.objects.using('external_db').all()
+#         if filters.get('year'):
+#             qs = qs.filter(sale_date__year=filters['year'])
+#         if filters.get('region'):
+#             qs = qs.filter(region=filters['region'])
+#         engine = CalculationEngine(qs)
+#         return {'data': engine.sales_summary()}
 
     # def _build_inventory(self, report, filters) -> dict:
     #     qs = InventoryItem.objects.using('external_db').all()
@@ -586,7 +581,7 @@ class ReportBuilder:
     #     period = filters.get('period', 'monthly')
     #     return {'data': agg.trend_analysis(period=period)}
 
-    def _build_custom(self, report, filters) -> dict:
-        return {'data': {}, 'message': f"Custom report: {report.name}"}
+    # def _build_custom(self, report, filters) -> dict:
+    #     return {'data': {}, 'message': f"Custom report: {report.name}"}
 
 

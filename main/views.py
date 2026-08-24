@@ -17,7 +17,7 @@ from django.views.decorators.cache import cache_page
 import datetime
 
 from .models import (
-    Home, SalesRecord, CalculationEngine, ReportBuilder, Report, DataToPandasDataset
+    SalesRecord, DataToPandasDataset
 )
 
 # class HomeListView(ListView):				
@@ -80,8 +80,22 @@ class HomeListView(ListView):
     @staticmethod
     def __extract_all_data():
 
-        dt = DataToPandasDataset.load_loans_dataframe
-        context = {'data1': dt}
+        ds = DataToPandasDataset(table="PastDueLoanRazm")
+        df = ds.load_loans_dataframe()
+
+         # Optional: filter/calculate before sending to template
+        df['outstanding'] = df['principal_amount'] - df['repaid_amount']
+        df['is_overdue']  = df['days_past_due'] > 0
+
+        context = {
+        'columns': df.columns.tolist(),          # list of column header names
+        'rows':    df.to_dict('records'),         # list of dicts — one per row
+        'summary': {
+                    'total_rows':       len(df),
+                    'total_outstanding': df['outstanding'].sum(),
+                    'overdue_count':    int(df['is_overdue'].sum()),
+                    }
+        }
 
         return context
 
@@ -90,36 +104,36 @@ class HomeListView(ListView):
 
 
 
-def sales_report(request):
-    """Sales summary with optional year/region filters."""
-    # ctx = get_menu_context(request)
+# def sales_report(request):
+#     """Sales summary with optional year/region filters."""
+#     # ctx = get_menu_context(request)
 
-    # Filters from GET params
-    year = request.GET.get('year', datetime.date.today().year)
-    region = request.GET.get('region', '')
+#     # Filters from GET params
+#     year = request.GET.get('year', datetime.date.today().year)
+#     region = request.GET.get('region', '')
 
-    try:
-        qs = SalesRecord.objects.using('external_db').filter(sale_date__year=year)
-        if region:
-            qs = qs.filter(region=region)
+#     try:
+#         qs = SalesRecord.objects.using('external_db').filter(sale_date__year=year)
+#         if region:
+#             qs = qs.filter(region=region)
 
-        engine = CalculationEngine(qs)
-        ctx['data'] = engine.sales_summary()
+#         engine = CalculationEngine(qs)
+#         ctx['data'] = engine.sales_summary()
 
-        # Available filter options
-        ctx['regions'] = list(
-            SalesRecord.objects.using('external_db')
-            .values_list('region', flat=True)
-            .distinct()
-            .order_by('region')
-        )
-        ctx['db_connected'] = True
-    except Exception as e:
-        ctx['db_connected'] = False
-        ctx['db_error'] = str(e)
-        ctx['data'] = {}
+#         # Available filter options
+#         ctx['regions'] = list(
+#             SalesRecord.objects.using('external_db')
+#             .values_list('region', flat=True)
+#             .distinct()
+#             .order_by('region')
+#         )
+#         ctx['db_connected'] = True
+#     except Exception as e:
+#         ctx['db_connected'] = False
+#         ctx['db_error'] = str(e)
+#         ctx['data'] = {}
 
-    ctx['selected_year'] = int(year)
-    ctx['selected_region'] = region
-    ctx['years'] = list(range(datetime.date.today().year, datetime.date.today().year - 5, -1))
-    return render(request, 'core/sales_report.html', ctx)
+#     ctx['selected_year'] = int(year)
+#     ctx['selected_region'] = region
+#     ctx['years'] = list(range(datetime.date.today().year, datetime.date.today().year - 5, -1))
+#     return render(request, 'core/sales_report.html', ctx)
