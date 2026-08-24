@@ -86,9 +86,8 @@ class Calculation:
     def WeightedAverageRate(self):
         ds = DataToPandasDataset(table="PastDueLoanRazm")
         df = ds.load_loans_dataframe()
-        for r in df.rows:
-            if df['Balance'][r] is 'NULL':
-                df['Balance'][r] = 0
+
+        df['Balance'] = df['Balance'].replace('NULL', 0)
 
         result = math.sumprod(df['AgreementPercent'],df['Balance'])/sum(df['Balance'])
         return result
