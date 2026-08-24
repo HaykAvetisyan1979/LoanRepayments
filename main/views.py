@@ -84,8 +84,8 @@ class HomeListView(ListView):
         df = ds.load_loans_dataframe()
 
          # Optional: filter/calculate before sending to template
-        df['outstanding'] = df['principal_amount'] - df['repaid_amount']
-        df['is_overdue']  = df['days_past_due'] > 0
+        # df['outstanding'] = df['principal_amount'] - df['repaid_amount']
+        # df['is_overdue']  = df['days_past_due'] > 0
 
         context = {
         'columns': df.columns.tolist(),          # list of column header names
