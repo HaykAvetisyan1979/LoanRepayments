@@ -87,8 +87,7 @@ class Calculation:
         ds = DataToPandasDataset(table="PastDueLoanRazm")
         df = ds.load_loans_dataframe()
 
-        df['Balance'] = df['Balance'].replace('NULL', 0.1)
-        df['AgreementPercent'] = df['AgreementPercent'].replace('Null',0.1)
+        df['Balance'] = df['Balance'].replace(['NULL', ''], 0).fillna(0)
 
         result = math.sumprod(df['AgreementPercent'],df['Balance'])/sum(df['Balance'])
         return result
