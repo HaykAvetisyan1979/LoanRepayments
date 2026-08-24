@@ -36,13 +36,13 @@ class HomeListView(ListView):
 
         context = {
         'result': rs,    
-        'columns': df.columns.tolist(),          # list of column header names
-        'rows':    df.to_dict('records'),         # list of dicts — one per row
-        'summary': {
-                    'total_rows':       len(df),
-                    'total_outstanding': df['BalanceEQ'].sum(),
-                    # 'overdue_count':    int(df['is_overdue'].sum()),
-                    }
+        # 'columns': df.columns.tolist(),          # list of column header names
+        # 'rows':    df.to_dict('records'),         # list of dicts — one per row
+        # 'summary': {
+        #             'total_rows':       len(df),
+        #             'total_outstanding': df['BalanceEQ'].sum(),
+        #             # 'overdue_count':    int(df['is_overdue'].sum()),
+        #             }
         }
 
         return context
