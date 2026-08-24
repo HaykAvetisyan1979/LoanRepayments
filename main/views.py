@@ -84,7 +84,7 @@ class HomeListView(ListView):
         df = ds.load_loans_dataframe()
 
          # Optional: filter/calculate before sending to template
-        # df['outstanding'] = df['principal_amount'] - df['repaid_amount']
+        # df['BalanceEQ'] = df['principal_amount'] - df['repaid_amount']
         # df['is_overdue']  = df['days_past_due'] > 0
 
         context = {
@@ -92,8 +92,8 @@ class HomeListView(ListView):
         'rows':    df.to_dict('records'),         # list of dicts — one per row
         'summary': {
                     'total_rows':       len(df),
-                    'total_outstanding': df['outstanding'].sum(),
-                    'overdue_count':    int(df['is_overdue'].sum()),
+                    'total_outstanding': df['BalanceEQ'].sum(),
+                    # 'overdue_count':    int(df['is_overdue'].sum()),
                     }
         }
 

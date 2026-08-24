@@ -524,7 +524,8 @@
         </thead>
         <tbody>
             {% for row in rows %}
-            <tr {% if row.is_overdue %}class="overdue"{% endif %}>
+            {% comment %} <tr {% if row.is_overdue %}class="overdue"{% endif %}> {% endcomment %}
+			<tr>
                 {% for col in columns %}
                 <td>{{ row|dict_key:col }}</td>
                 {% endfor %}
