@@ -81,24 +81,20 @@ class DataToPandasDataset:
 class Calculation:
     def __init__(self, table: str = "PastDueLoanRazm"):
         self.table = table
-        self.ds = DataToPandasDataset(table="PastDueLoanRazm")
-        self.df= self.ds.load_loans_dataframe()
 
-    
+
     def WeightedAverageRate(self):
-        # ds = DataToPandasDataset(table="PastDueLoanRazm")
-        # df = ds.load_loans_dataframe()
+        ds = DataToPandasDataset(table="PastDueLoanRazm")
+        df = ds.load_loans_dataframe()
 
-        self.df['Balance'] = self.df['Balance'].replace(['NULL', ''], 0).fillna(0)
+        df['Balance'] = df['Balance'].replace(['NULL', ''], 0).fillna(0)
 
-        result = math.sumprod(self.df['AgreementPercent'],self.df['Balance'])/sum(self.df['Balance'])
+        result = math.sumprod(df['AgreementPercent'],df['Balance'])/sum(df['Balance'])
         return result
 
 
     def Repayments(self):
-        self.df['Balance'] = self.df['Balance'].replace(['NULL', ''], 0).fillna(0) 
         pass
-
 
 
         
