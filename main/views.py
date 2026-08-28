@@ -48,7 +48,7 @@ class HomeListView(ListView):
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        return render(request, 'main/index.html', context=self.__extract_all_data())
+        return render(request, 'main/main/index.html', context=self.__extract_all_data())
 
 
 
