@@ -25,8 +25,8 @@ class HomeListView(ListView):
     @staticmethod
     def __extract_all_data():
 
-        ds = DataToPandasDataset(table="PastDueLoanRazm")
-        df = ds.load_loans_dataframe()
+        # ds = DataToPandasDataset(table="PastDueLoanRazm")
+        # df = ds.load_loans_dataframe()
         wi = Calculation()
         rs = wi.WeightedAverageRate()
 
