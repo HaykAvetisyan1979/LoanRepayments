@@ -95,7 +95,8 @@ class Calculation:
         return result
 
 
-    def Repayments(self):
+    def Repayments(self, client):
+        self.client=client
         pass
 
 
