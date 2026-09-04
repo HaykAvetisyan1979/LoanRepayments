@@ -16,6 +16,7 @@ echo "Postgres is up - executing commands"
 
 
 python manage.py makemigrations
+python manage.py makemigrations --merge --no-input # ← merge if needed  Լոկալ և սերվերի վրա աշխատացնելուց միգրացիայի խնդիր որ չտա
 python manage.py migrate
 python manage.py collectstatic --noinput
 #python manage.py loaddata main.json
